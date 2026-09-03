@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, usePage } from "@inertiajs/vue3";
 import {
     Users,
     School,
@@ -126,6 +126,8 @@ function getInitials(name: string): string {
         .join('')
         .toUpperCase();
 }
+
+console.log(usePage().props.students);
 </script>
 
 <template>

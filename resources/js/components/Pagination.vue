@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     ChevronLeft,
     ChevronRight,
@@ -78,6 +78,7 @@ const lastPageUrl = computed<string | null>(() => props.paginator.links.last ?? 
 
 const isFirstPage = computed(() => meta.value.current_page === 1);
 const isLastPage = computed(() => meta.value.current_page === meta.value.last_page);
+
 </script>
 
 <template>
