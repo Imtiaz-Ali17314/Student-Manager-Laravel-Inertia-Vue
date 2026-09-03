@@ -154,7 +154,7 @@ function getInitials(name: string): string {
 
         <!-- Student Profile Overview Header Card -->
         <Card class="border-sidebar-border/70 overflow-hidden shadow-xs">
-            <div class="p-6 md:p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-transparent">
+            <div class="p-6 md:p-8 bg-linear-to-r from-primary/5 via-primary/10 to-transparent">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
                     <!-- Big Avatar Circle -->
                     <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-2xl shadow-md border-2 border-background">
