@@ -12,7 +12,7 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $students = StudentResource::collection(Student::paginate(10));
+        $students = StudentResource::collection(Student::latest()->paginate(10));
 
         return inertia('students/Index', [
             'students' => $students,
@@ -40,5 +40,36 @@ class StudentController extends Controller
         Student::create($validated);
 
         return redirect()->route('students.index')->with('success', 'Student created successfully.');
+    }
+
+    public function show(Student $student)
+    {
+        return inertia('students/Show', [
+            'student' => StudentResource::make($student),
+        ]);
+    }
+
+    public function edit(Student $student)
+    {
+        $classes = ClassesResource::collection(Classes::with('sections')->get());
+
+        return inertia('students/Edit', [
+            'student' => StudentResource::make($student),
+            'classes' => $classes,
+        ]);
+    }
+
+    public function update(Request $request, Student $student)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('students', 'email')->ignore($student->id)],
+            'class_id' => 'required|exists:classes,id',
+            'section_id' => 'required|exists:sections,id',
+        ]);
+
+        $student->update($validated);
+
+        return redirect()->route('students.index')->with('success', 'Student updated successfully.');
     }
 }
