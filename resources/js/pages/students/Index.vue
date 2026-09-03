@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { computed, ref } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     Users,
     School,
@@ -13,11 +13,13 @@ import {
     Eye,
     X,
     GraduationCap,
-} from "@lucide/vue";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    Loader2,
+    AlertTriangle,
+} from '@lucide/vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,11 +27,19 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import Pagination from "@/components/Pagination.vue";
-import type { Paginator } from "@/components/Pagination.vue";
-import { dashboard } from "@/routes";
-import studentsRoute from "@/routes/students";
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import Pagination from '@/components/Pagination.vue';
+import type { Paginator } from '@/components/Pagination.vue';
+import { dashboard } from '@/routes';
+import studentsRoute from '@/routes/students';
 
 // Interfaces matching StudentResource.php output
 export interface ClassResourceData {
@@ -66,11 +76,11 @@ defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: "Dashboard",
+                title: 'Dashboard',
                 href: dashboard(),
             },
             {
-                title: "Students",
+                title: 'Students',
                 href: studentsRoute.index(),
             },
         ],
@@ -82,6 +92,26 @@ const studentList = computed<StudentResourceData[]>(() => props.students.data ??
 
 // Search filter state
 const searchQuery = ref('');
+
+// Delete confirmation modal state
+const studentToDelete = ref<StudentResourceData | null>(null);
+const isDeleteDialogOpen = ref(false);
+const deleteForm = useForm({});
+
+function promptDelete(student: StudentResourceData) {
+    studentToDelete.value = student;
+    isDeleteDialogOpen.value = true;
+}
+
+function handleConfirmDelete() {
+    if (!studentToDelete.value) return;
+    deleteForm.delete(studentsRoute.destroy(studentToDelete.value.id).url, {
+        onSuccess: () => {
+            isDeleteDialogOpen.value = false;
+            studentToDelete.value = null;
+        },
+    });
+}
 
 // Computed filtered list (filters within the current page)
 const filteredStudents = computed(() => {
@@ -126,8 +156,6 @@ function getInitials(name: string): string {
         .join('')
         .toUpperCase();
 }
-
-console.log(usePage().props.students);
 </script>
 
 <template>
@@ -135,26 +163,18 @@ console.log(usePage().props.students);
 
     <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
         <!-- Top Title & Action Header -->
-        <div
-            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-        >
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1
-                        class="text-2xl font-bold tracking-tight text-foreground"
-                    >
+                    <h1 class="text-2xl font-bold tracking-tight text-foreground">
                         Students Directory
                     </h1>
-                    <Badge
-                        variant="secondary"
-                        class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                    >
+                    <Badge variant="secondary" class="rounded-full px-2.5 py-0.5 text-xs font-semibold">
                         {{ totalStudents }} Total
                     </Badge>
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    Manage all registered students, view their assigned classes
-                    and sections.
+                    Manage all registered students, view their assigned classes and sections.
                 </p>
             </div>
 
@@ -171,53 +191,35 @@ console.log(usePage().props.students);
         <!-- Summary Statistics Overview Cards -->
         <div class="grid gap-4 sm:grid-cols-3">
             <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader
-                    class="flex flex-row items-center justify-between pb-2"
-                >
-                    <CardTitle class="text-sm font-medium text-muted-foreground"
-                        >Total Students</CardTitle
-                    >
+                <CardHeader class="flex flex-row items-center justify-between pb-2">
+                    <CardTitle class="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
                     <Users class="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div class="text-2xl font-bold">{{ totalStudents }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        Enrolled across all grades
-                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">Enrolled across all grades</p>
                 </CardContent>
             </Card>
 
             <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader
-                    class="flex flex-row items-center justify-between pb-2"
-                >
-                    <CardTitle class="text-sm font-medium text-muted-foreground"
-                        >Active Classes</CardTitle
-                    >
+                <CardHeader class="flex flex-row items-center justify-between pb-2">
+                    <CardTitle class="text-sm font-medium text-muted-foreground">Active Classes</CardTitle>
                     <School class="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div class="text-2xl font-bold">{{ totalClasses }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        Unique classes represented
-                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">Unique classes represented</p>
                 </CardContent>
             </Card>
 
             <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader
-                    class="flex flex-row items-center justify-between pb-2"
-                >
-                    <CardTitle class="text-sm font-medium text-muted-foreground"
-                        >Active Sections</CardTitle
-                    >
+                <CardHeader class="flex flex-row items-center justify-between pb-2">
+                    <CardTitle class="text-sm font-medium text-muted-foreground">Active Sections</CardTitle>
                     <Layers class="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div class="text-2xl font-bold">{{ totalSections }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        Sections currently assigned
-                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">Sections currently assigned</p>
                 </CardContent>
             </Card>
         </div>
@@ -225,9 +227,7 @@ console.log(usePage().props.students);
         <!-- Filter & Search Toolbar -->
         <div class="flex items-center justify-between gap-4">
             <div class="relative w-full max-w-sm">
-                <Search
-                    class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                />
+                <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     v-model="searchQuery"
                     type="text"
@@ -249,18 +249,14 @@ console.log(usePage().props.students);
         <Card class="border-sidebar-border/70 overflow-hidden shadow-xs">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead
-                        class="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground border-b border-sidebar-border/70"
-                    >
+                    <thead class="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground border-b border-sidebar-border/70">
                         <tr>
                             <th scope="col" class="px-6 py-3.5">Student</th>
                             <th scope="col" class="px-6 py-3.5">Email</th>
                             <th scope="col" class="px-6 py-3.5">Class</th>
                             <th scope="col" class="px-6 py-3.5">Section</th>
                             <th scope="col" class="px-6 py-3.5">Joined Date</th>
-                            <th scope="col" class="px-6 py-3.5 text-right">
-                                Actions
-                            </th>
+                            <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-sidebar-border/50">
@@ -271,26 +267,14 @@ console.log(usePage().props.students);
                                 class="transition-colors hover:bg-muted/40"
                             >
                                 <!-- Student Name & Avatar -->
-                                <td
-                                    class="px-6 py-4 font-medium text-foreground"
-                                >
+                                <td class="px-6 py-4 font-medium text-foreground">
                                     <div class="flex items-center gap-3">
-                                        <div
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs border border-primary/20"
-                                        >
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs border border-primary/20">
                                             {{ getInitials(student.name) }}
                                         </div>
                                         <div>
-                                            <div
-                                                class="font-semibold text-foreground"
-                                            >
-                                                {{ student.name }}
-                                            </div>
-                                            <div
-                                                class="text-xs text-muted-foreground"
-                                            >
-                                                ID: #{{ student.id }}
-                                            </div>
+                                            <div class="font-semibold text-foreground">{{ student.name }}</div>
+                                            <div class="text-xs text-muted-foreground">ID: #{{ student.id }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -309,11 +293,7 @@ console.log(usePage().props.students);
                                     >
                                         {{ student.class_id.name }}
                                     </Badge>
-                                    <span
-                                        v-else
-                                        class="text-xs text-muted-foreground italic"
-                                        >Not Assigned</span
-                                    >
+                                    <span v-else class="text-xs text-muted-foreground italic">Not Assigned</span>
                                 </td>
 
                                 <!-- Section -->
@@ -325,17 +305,11 @@ console.log(usePage().props.students);
                                     >
                                         {{ student.section_id.name }}
                                     </Badge>
-                                    <span
-                                        v-else
-                                        class="text-xs text-muted-foreground italic"
-                                        >Not Assigned</span
-                                    >
+                                    <span v-else class="text-xs text-muted-foreground italic">Not Assigned</span>
                                 </td>
 
                                 <!-- Created At Date -->
-                                <td
-                                    class="px-6 py-4 text-muted-foreground text-xs"
-                                >
+                                <td class="px-6 py-4 text-muted-foreground text-xs">
                                     {{ student.created_at }}
                                 </td>
 
@@ -343,72 +317,39 @@ console.log(usePage().props.students);
                                 <td class="px-6 py-4 text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                class="h-8 w-8"
-                                            >
-                                                <MoreHorizontal
-                                                    class="h-4 w-4"
-                                                />
-                                                <span class="sr-only"
-                                                    >Open menu</span
-                                                >
+                                            <Button variant="ghost" size="icon" class="h-8 w-8">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                                <span class="sr-only">Open menu</span>
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            align="end"
-                                            class="w-40"
-                                        >
-                                            <DropdownMenuLabel
-                                                >Actions</DropdownMenuLabel
-                                            >
+                                        <DropdownMenuContent align="end" class="w-40">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem as-child>
                                                 <Link
-                                                    :href="
-                                                        studentsRoute.show(
-                                                            student.id,
-                                                        )
-                                                    "
+                                                    :href="studentsRoute.show(student.id)"
                                                     class="flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <Eye
-                                                        class="h-4 w-4 text-muted-foreground"
-                                                    />
+                                                    <Eye class="h-4 w-4 text-muted-foreground" />
                                                     <span>View Details</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem as-child>
                                                 <Link
-                                                    :href="
-                                                        studentsRoute.edit(
-                                                            student.id,
-                                                        )
-                                                    "
+                                                    :href="studentsRoute.edit(student.id)"
                                                     class="flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <Pencil
-                                                        class="h-4 w-4 text-muted-foreground"
-                                                    />
+                                                    <Pencil class="h-4 w-4 text-muted-foreground" />
                                                     <span>Edit Student</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem as-child>
-                                                <Link
-                                                    :href="
-                                                        studentsRoute.destroy(
-                                                            student.id,
-                                                        )
-                                                    "
-                                                    method="delete"
-                                                    as="button"
-                                                    class="flex w-full items-center gap-2 text-destructive cursor-pointer focus:bg-destructive/10"
-                                                >
-                                                    <Trash2 class="h-4 w-4" />
-                                                    <span>Delete</span>
-                                                </Link>
+                                            <DropdownMenuItem 
+                                                @select.prevent="promptDelete(student)"
+                                                class="flex items-center gap-2 text-destructive cursor-pointer focus:bg-destructive/10"
+                                            >
+                                                <Trash2 class="h-4 w-4" />
+                                                <span>Delete</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -420,28 +361,16 @@ console.log(usePage().props.students);
                         <template v-else>
                             <tr>
                                 <td colspan="6" class="px-6 py-12 text-center">
-                                    <div
-                                        class="mx-auto flex max-w-md flex-col items-center justify-center text-center"
-                                    >
-                                        <div
-                                            class="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
-                                        >
-                                            <GraduationCap
-                                                class="h-6 w-6 text-muted-foreground"
-                                            />
+                                    <div class="mx-auto flex max-w-md flex-col items-center justify-center text-center">
+                                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                                            <GraduationCap class="h-6 w-6 text-muted-foreground" />
                                         </div>
-                                        <h3
-                                            class="mt-4 text-base font-semibold text-foreground"
-                                        >
-                                            No students found
-                                        </h3>
-                                        <p
-                                            class="mt-1 text-sm text-muted-foreground"
-                                        >
+                                        <h3 class="mt-4 text-base font-semibold text-foreground">No students found</h3>
+                                        <p class="mt-1 text-sm text-muted-foreground">
                                             {{
                                                 searchQuery
                                                     ? `No results found matching "${searchQuery}". Try clearing your search.`
-                                                    : "Get started by creating your first student record."
+                                                    : 'Get started by creating your first student record.'
                                             }}
                                         </p>
                                         <div class="mt-4 flex gap-2">
@@ -459,14 +388,8 @@ console.log(usePage().props.students);
                                                 variant="default"
                                                 size="sm"
                                             >
-                                                <Link
-                                                    :href="
-                                                        studentsRoute.create()
-                                                    "
-                                                >
-                                                    <UserPlus
-                                                        class="mr-1.5 h-4 w-4"
-                                                    />
+                                                <Link :href="studentsRoute.create()">
+                                                    <UserPlus class="mr-1.5 h-4 w-4" />
                                                     Add Student
                                                 </Link>
                                             </Button>
@@ -487,5 +410,41 @@ console.log(usePage().props.students);
                 <Pagination :paginator="students" />
             </div>
         </Card>
+
+        <!-- Delete Confirmation Modal Dialog -->
+        <Dialog v-model:open="isDeleteDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader class="gap-2">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <AlertTriangle class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <DialogTitle class="text-lg">Delete Student Record?</DialogTitle>
+                        <DialogDescription class="mt-1 text-sm">
+                            Are you sure you want to delete <strong class="text-foreground">{{ studentToDelete?.name }}</strong>? This action cannot be undone and will permanently remove student #{{ studentToDelete?.id }} from the database.
+                        </DialogDescription>
+                    </div>
+                </DialogHeader>
+                <DialogFooter class="mt-4 gap-2 sm:gap-0">
+                    <Button 
+                        variant="outline" 
+                        @click="isDeleteDialogOpen = false"
+                        :disabled="deleteForm.processing"
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        variant="destructive" 
+                        @click="handleConfirmDelete"
+                        :disabled="deleteForm.processing"
+                        class="gap-2"
+                    >
+                        <Loader2 v-if="deleteForm.processing" class="h-4 w-4 animate-spin" />
+                        <Trash2 v-else class="h-4 w-4" />
+                        <span>{{ deleteForm.processing ? 'Deleting...' : 'Delete Student' }}</span>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

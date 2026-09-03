@@ -7,6 +7,7 @@ use App\Http\Resources\StudentResource;
 use App\Models\Classes;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -63,7 +64,7 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('students', 'email')->ignore($student->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('students', 'email')->ignore($student->id)],
             'class_id' => 'required|exists:classes,id',
             'section_id' => 'required|exists:sections,id',
         ]);
@@ -71,5 +72,12 @@ class StudentController extends Controller
         $student->update($validated);
 
         return redirect()->route('students.index')->with('success', 'Student updated successfully.');
+    }
+
+    public function destroy(Student $student)
+    {
+        $student->delete();
+
+        return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
     }
 }
