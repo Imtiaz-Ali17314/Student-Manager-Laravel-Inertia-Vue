@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ClassesResource;
 use App\Http\Resources\StudentResource;
+use App\Models\Classes;
 use App\Models\Student;
+use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
@@ -14,5 +17,28 @@ class StudentController extends Controller
         return inertia('students/Index', [
             'students' => $students,
         ]);
+    }
+
+    public function create()
+    {
+        $classes = ClassesResource::collection(Classes::with('sections')->get());
+
+        return inertia('students/Create', [
+            'classes' => $classes,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:students,email',
+            'class_id' => 'required|exists:classes,id',
+            'section_id' => 'required|exists:sections,id',
+        ]);
+
+        Student::create($validated);
+
+        return redirect()->route('students.index')->with('success', 'Student created successfully.');
     }
 }
