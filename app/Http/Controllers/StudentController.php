@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Student;
 use App\Http\Resources\StudentResource;
-use Illuminate\Http\Request;
+use App\Models\Student;
 
 class StudentController extends Controller
 {
@@ -12,7 +11,7 @@ class StudentController extends Controller
     {
         $students = StudentResource::collection(Student::all());
 
-        return inertia('Students/Index', [
+        return inertia('students/Index', [
             'students' => $students,
         ]);
     }
