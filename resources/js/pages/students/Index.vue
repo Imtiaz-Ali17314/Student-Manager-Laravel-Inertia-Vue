@@ -2,9 +2,6 @@
 import { computed, ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
-    Users,
-    School,
-    Layers,
     Search,
     UserPlus,
     MoreHorizontal,
@@ -19,7 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -130,20 +127,8 @@ const filteredStudents = computed(() => {
     });
 });
 
-// Quick Statistics — use meta.total for the overall total across all pages
+// Overall total across all pages
 const totalStudents = computed(() => props.students.meta?.total ?? studentList.value.length);
-const totalClasses = computed(() => {
-    const classIds = new Set(
-        studentList.value.map((s) => s.class_id?.id).filter(Boolean),
-    );
-    return classIds.size;
-});
-const totalSections = computed(() => {
-    const sectionIds = new Set(
-        studentList.value.map((s) => s.section_id?.id).filter(Boolean),
-    );
-    return sectionIds.size;
-});
 
 // Helper for Student Avatar Initials
 function getInitials(name: string): string {
@@ -159,10 +144,10 @@ function getInitials(name: string): string {
 </script>
 
 <template>
-    <Head title="Students" />
+    <Head title="Students Directory" />
 
     <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
-        <!-- Top Title & Action Header -->
+        <!-- Top Directory Header & Actions -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div class="flex items-center gap-2">
@@ -174,7 +159,7 @@ function getInitials(name: string): string {
                     </Badge>
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    Manage all registered students, view their assigned classes and sections.
+                    Browse, search, edit, and manage student accounts and assignments.
                 </p>
             </div>
 
@@ -188,44 +173,8 @@ function getInitials(name: string): string {
             </div>
         </div>
 
-        <!-- Summary Statistics Overview Cards -->
-        <div class="grid gap-4 sm:grid-cols-3">
-            <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
-                    <CardTitle class="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
-                    <Users class="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold">{{ totalStudents }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">Enrolled across all grades</p>
-                </CardContent>
-            </Card>
-
-            <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
-                    <CardTitle class="text-sm font-medium text-muted-foreground">Active Classes</CardTitle>
-                    <School class="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold">{{ totalClasses }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">Unique classes represented</p>
-                </CardContent>
-            </Card>
-
-            <Card class="border-sidebar-border/70 shadow-xs">
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
-                    <CardTitle class="text-sm font-medium text-muted-foreground">Active Sections</CardTitle>
-                    <Layers class="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold">{{ totalSections }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">Sections currently assigned</p>
-                </CardContent>
-            </Card>
-        </div>
-
         <!-- Filter & Search Toolbar -->
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div class="relative w-full max-w-sm">
                 <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -242,6 +191,10 @@ function getInitials(name: string): string {
                 >
                     <X class="h-4 w-4" />
                 </button>
+            </div>
+
+            <div class="text-xs text-muted-foreground self-end sm:self-center">
+                Showing {{ filteredStudents.length }} of {{ studentList.length }} on this page
             </div>
         </div>
 
