@@ -26,6 +26,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Pagination from "@/components/Pagination.vue";
+import type { Paginator } from "@/components/Pagination.vue";
 import { dashboard } from "@/routes";
 import studentsRoute from "@/routes/students";
 
@@ -55,7 +57,8 @@ export interface StudentResourceData {
 }
 
 const props = defineProps<{
-    students: StudentResourceData[] | { data: StudentResourceData[] };
+    /** Laravel paginated ResourceCollection */
+    students: Paginator<StudentResourceData>;
 }>();
 
 // Set Inertia Layout Breadcrumbs
@@ -74,18 +77,13 @@ defineOptions({
     },
 });
 
-// Normalize students array regardless of resource wrapping
-const studentList = computed<StudentResourceData[]>(() => {
-    if (!props.students) return [];
-    return Array.isArray(props.students)
-        ? props.students
-        : props.students.data || [];
-});
+// Current page records from the paginator
+const studentList = computed<StudentResourceData[]>(() => props.students.data ?? []);
 
 // Search filter state
-const searchQuery = ref("");
+const searchQuery = ref('');
 
-// Computed filtered list
+// Computed filtered list (filters within the current page)
 const filteredStudents = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
     if (!query) return studentList.value;
@@ -102,8 +100,8 @@ const filteredStudents = computed(() => {
     });
 });
 
-// Quick Statistics
-const totalStudents = computed(() => studentList.value.length);
+// Quick Statistics — use meta.total for the overall total across all pages
+const totalStudents = computed(() => props.students.meta?.total ?? studentList.value.length);
 const totalClasses = computed(() => {
     const classIds = new Set(
         studentList.value.map((s) => s.class_id?.id).filter(Boolean),
@@ -119,13 +117,13 @@ const totalSections = computed(() => {
 
 // Helper for Student Avatar Initials
 function getInitials(name: string): string {
-    if (!name) return "ST";
+    if (!name) return 'ST';
     return name
-        .split(" ")
+        .split(' ')
         .map((part) => part[0])
         .filter(Boolean)
         .slice(0, 2)
-        .join("")
+        .join('')
         .toUpperCase();
 }
 </script>
@@ -477,6 +475,14 @@ function getInitials(name: string): string {
                         </template>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination controls -->
+            <div
+                v-if="students.meta && students.meta.last_page > 1"
+                class="border-t border-sidebar-border/50 px-4 py-3"
+            >
+                <Pagination :paginator="students" />
             </div>
         </Card>
     </div>
