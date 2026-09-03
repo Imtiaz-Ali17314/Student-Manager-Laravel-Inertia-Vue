@@ -16,7 +16,12 @@ class Student extends Model
         'section_id',
     ];
 
-    public function sections()
+    protected $with = [
+        'class',
+        'section',
+    ];
+
+    public function section()
     {
         return $this->belongsTo(Section::class);
     }
